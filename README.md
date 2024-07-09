@@ -1,5 +1,9 @@
 # MSTeamsPJSIPNAT
+USE AT YOUR OWN RISK
+
 Compiled PJSIP NAT module for Asterisk 21 on Debian 12
+
+
 
 Usually lives in /usr/lib/x86_64-linux-gnu/asterisk/modules/ on FreePBX, Asterisk 21, Debian 12 Bookworm: https://github.com/FreePBX/sng_freepbx_debian_install .
 
