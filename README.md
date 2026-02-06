@@ -1,23 +1,33 @@
 # MSTeamsPJSIPNAT
 USE AT YOUR OWN RISK
 
-Compiled PJSIP NAT module for Asterisk 21 on Debian 12
+Compiled PJSIP NAT modules for Asterisk 21, 22 and 23 on Debian 12
 
 
 
-Usually lives in /usr/lib/x86_64-linux-gnu/asterisk/modules/ on FreePBX, Asterisk 21, Debian 12 Bookworm: https://github.com/FreePBX/sng_freepbx_debian_install .
+Usually lives in /usr/lib/x86_64-linux-gnu/asterisk/modules/ on FreePBX, Asterisk 21/22/23, Debian 12 Bookworm: https://github.com/FreePBX/sng_freepbx_debian_install .
 
-You may load it like this:
+You may load it like this (example for Asterisk 22; adjust the version in the URL for 21 or 23):
 
-Download from this repo into Asterisk modules directory:
+Download from this repo into the Asterisk modules directory:
 
-        wget -O res_pjsip_nat.so.MSTEAMS -P /usr/lib/x86_64-linux-gnu/asterisk/modules/ https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/blob/5dcd26ef97841268ac030a39643b1b074cff362d/res_pjsip_nat.so
-        
+	    # For Asterisk 21
+	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
+	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-21/res_pjsip_nat.so
+
+	    # For Asterisk 22
+	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
+	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-22/res_pjsip_nat.so
+
+	    # For Asterisk 23
+	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
+	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-23/res_pjsip_nat.so
+
 Backup original:
 
-        mv /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so  /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.ORIG
+	    mv /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.ORIG
 
-Copy custom PJSIP nat module:
+Copy custom PJSIP NAT module:
 
         cp -v /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so
 
