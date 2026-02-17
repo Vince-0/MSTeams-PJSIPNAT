@@ -141,16 +141,68 @@ This means:
 - ✅ You can change your FQDN without recompiling
 - ✅ Multiple deployments can use the same binary
 
-## Version history
-
-- **v2 and later**: Includes `ms_signaling_address` runtime configuration patch (current)
-- **v1 (deprecated)**: Had hard-coded FQDNs - do not use
 
 ## Related projects
 
 For automated installation and building from source, see:
 - [MSTeams-FreePBX](https://github.com/Vince-0/MSTeams-FreePBX) - Installation script with source building and patch application
 
-## Support
+## Runtime FQDN configuration (`ms_signaling_address`)
 
-For issues, questions, or contributions, please open an issue on GitHub.
+
+
+The patch adds a new transport option `ms_signaling_address`. Instead of hard-coding the FQDN into `res/res_pjsip_nat.c` at build time, the module reads the FQDN from your PJSIP transport configuration at runtime.
+
+The key parameters on your `transport` object in `pjsip.conf` are:
+
+- `external_signaling_address` – the **public IP address** of your SBC as seen by MS Teams (usually your WAN IP or load balancer VIP).
+- `external_signaling_port` – the **external SIP port** forwarded from the internet to Asterisk (typically `5061` for TLS).
+- `ms_signaling_address` – the **FQDN** MS Teams expects to see in SIP Contact and Via headers (this must match the FQDN you configure in Microsoft 365 and on your TLS certificate).
+
+To configure these options:
+
+1. Choose the FQDN that will represent your SBC to MS Teams, for example `sbc.example.com`. This FQDN:
+   - Must resolve in public DNS to your SBC public IP.
+   - Must appear in the certificate presented by Asterisk (CN or SAN).
+   - Must match what you configure in the Microsoft Teams Direct Routing/SBC settings.
+2. Determine the public IP and port that MS Teams will use to reach your SBC:
+   - `external_signaling_address` = that public IP address.
+   - `external_signaling_port` = the TLS SIP port you expose (commonly `5061`).
+3. Edit your PJSIP transport configuration:
+   - On a plain Asterisk system, edit `/etc/asterisk/pjsip.conf` and add or update the appropriate `transport` section.
+   - On a FreePBX system, add the transport in the appropriate custom file (for example `/etc/asterisk/pjsip.transports_custom.conf`), rather than editing the FreePBX‑managed `pjsip.conf` directly.
+4. Set `ms_signaling_address` to the SBC FQDN you chose in step 1.
+5. Reload PJSIP (for example from the Asterisk CLI with `pjsip reload` or via FreePBX) so the new transport settings take effect.
+
+Example transport stanza:
+
+```ini
+[transport-ms-teams]
+type=transport
+protocol=tls
+external_signaling_address=203.0.113.10
+external_signaling_port=5061
+ms_signaling_address=sbc.example.com
+```
+
+If `ms_signaling_address` is not set, Asterisk continues to use the existing behaviour based on `external_signaling_address` and `external_signaling_port`.
+
+The install script:
+
+- Applies the `ms_signaling_address` patch to the Asterisk sources whenever it builds from source (both default FreePBX mode and `--asterisk-only`).
+- Or downloads precompiled `res_pjsip_nat.so` modules that were built from patched sources (see below).
+
+## Compiled PJSIP NAT modules for Asterisk 21, 22 and 23 on Debian 12
+
+Precompiled `res_pjsip_nat.so` modules for multiple Asterisk versions are available in the following repository (organised by Asterisk major version). These modules are built from sources that include the `ms_signaling_address` runtime FQDN patch described above (v2 and later):
+
+
+## Further Development
+
+Operating system version and distribution options.
+
+## Reference Links
+
+## Run Time Patch
+
+[Jose's](https://github.com/eagle26) run time [patch](https://github.com/asterisk/asterisk/compare/master...eagle26:asterisk:master)
