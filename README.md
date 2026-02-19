@@ -1,4 +1,4 @@
-# MSTeamsPJSIPNAT
+# MSTeams-PJSIPNAT
 
 **USE AT YOUR OWN RISK**
 
@@ -17,46 +17,67 @@ These modules are built from Asterisk sources patched with the `ms_signaling_add
 
 ## Installation
 
-These modules are typically installed in `/usr/lib/x86_64-linux-gnu/asterisk/modules/` on FreePBX, Asterisk 21/22/23, Debian 12 Bookworm: https://github.com/FreePBX/sng_freepbx_debian_install
+These modules are typically installed in the Asterisk modules directory. The path depends on your CPU architecture:
 
-### Step 1: Download the module
+| Architecture | Modules directory |
+|---|---|
+| x86_64 (amd64) | `/usr/lib/x86_64-linux-gnu/asterisk/modules/` |
+| aarch64 (arm64) | `/usr/lib/aarch64-linux-gnu/asterisk/modules/` |
+| armv7l (armhf)  | `/usr/lib/arm-linux-gnueabihf/asterisk/modules/` |
 
-Download the appropriate version for your Asterisk installation:
+On a standard FreePBX Debian 12 install: https://github.com/FreePBX/sng_freepbx_debian_install
 
-	    # For Asterisk 21
-	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
-	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-21/res_pjsip_nat.so
+### Option A: Use the automated installer (recommended)
 
-	    # For Asterisk 22
-	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
-	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-22/res_pjsip_nat.so
+The [MSTeams-FreePBX](https://github.com/Vince-0/MSTeams-FreePBX) installer script handles downloading or building the module, SSL certificate setup, and configuration automatically. It auto-detects your architecture. See that repo for full details.
 
-	    # For Asterisk 23
-	    wget -O /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
-	      https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-23/res_pjsip_nat.so
+### Option B: Download prebuilt module manually
 
-### Step 2: Backup the original module
+#### Step 1: Download the module
 
-```bash
-mv /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so \
-   /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.ORIG
-```
-
-### Step 3: Install the custom module
+Replace `<ARCH>` with your Debian architecture (`amd64`, `arm64`, `armhf`, `i386`, `ppc64el`) and `<VER>` with your Asterisk major version (`21`, `22`, or `23`):
 
 ```bash
-cp -v /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so.MSTEAMS \
-      /usr/lib/x86_64-linux-gnu/asterisk/modules/res_pjsip_nat.so
+# Example: amd64, Asterisk 22
+MODULES=/usr/lib/x86_64-linux-gnu/asterisk/modules
+wget -O $MODULES/res_pjsip_nat.so.MSTEAMS \
+  https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-amd64/asterisk-22/res_pjsip_nat.so
+
+# Example: arm64, Asterisk 22
+MODULES=/usr/lib/aarch64-linux-gnu/asterisk/modules
+wget -O $MODULES/res_pjsip_nat.so.MSTEAMS \
+  https://github.com/Vince-0/MSTeamsPJSIPNAT_Debian12/raw/main/prebuilt/debian12-arm64/asterisk-22/res_pjsip_nat.so
 ```
 
-### Step 4: Reload the module
+#### Step 2: Backup the original module
+
+```bash
+mv $MODULES/res_pjsip_nat.so $MODULES/res_pjsip_nat.so.ORIG
+```
+
+#### Step 3: Install the custom module
+
+```bash
+cp -v $MODULES/res_pjsip_nat.so.MSTEAMS $MODULES/res_pjsip_nat.so
+```
+
+### Option C: Build from source
+
+If no prebuilt module is available for your architecture, or you want to build it yourself, clone the Asterisk sources, apply the patch from [MSTeams-FreePBX](https://github.com/Vince-0/MSTeams-FreePBX), and build. After building, copy only the module (do **not** run `make install` on a FreePBX system — that would overwrite FreePBX-managed binaries):
+
+```bash
+# After ./configure && make inside the Asterisk source tree:
+cp -v res/res_pjsip_nat.so $MODULES/res_pjsip_nat.so
+```
+
+### After installation: Reload the module
 
 ```bash
 asterisk -rx 'module unload res_pjsip_nat.so'
 asterisk -rx 'module load res_pjsip_nat.so'
 ```
 
-### Step 5: Verify the module loaded
+### After installation: Verify the module loaded
 
 ```bash
 asterisk -rx 'module show like res_pjsip_nat.so'
@@ -68,6 +89,36 @@ Module                         Description                              Use Coun
 res_pjsip_nat.so               PJSIP NAT Support                        0          Running              core
 1 modules loaded
 ```
+
+## SSL Certificate Requirement
+
+MS Teams Direct Routing **requires** a valid TLS certificate issued by a trusted public CA for your FQDN. Self-signed certificates are not accepted by Microsoft.
+
+[Let's Encrypt](https://letsencrypt.org/) (via **certbot**) is the recommended free option:
+
+```bash
+# Install certbot
+apt-get install -y certbot
+
+# Obtain a certificate (stop apache2 first if it's running on port 80)
+systemctl stop apache2
+certbot certonly --standalone --non-interactive --agree-tos \
+  --email admin@example.com -d sbc.example.com
+systemctl start apache2
+```
+
+Certbot installs certificates to `/etc/letsencrypt/live/<your-fqdn>/`. Copy the relevant files to Asterisk's SSL directory:
+
+```bash
+mkdir -p /etc/asterisk/ssl
+cp /etc/letsencrypt/live/sbc.example.com/fullchain.pem /etc/asterisk/ssl/cert.crt
+cp /etc/letsencrypt/live/sbc.example.com/cert.pem      /etc/asterisk/ssl/ca.crt
+cp /etc/letsencrypt/live/sbc.example.com/privkey.pem   /etc/asterisk/ssl/privkey.crt
+```
+
+Certbot automatically renews certificates via a systemd timer or cron job. After renewal, re-copy the updated files and reload Asterisk.
+
+> **Note:** The [MSTeams-FreePBX](https://github.com/Vince-0/MSTeams-FreePBX) installer automates all of this — certificate issuance, file copying, and configuration — using certbot.
 
 ## Required Configuration
 
