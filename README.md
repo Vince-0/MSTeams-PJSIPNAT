@@ -161,7 +161,7 @@ Create or edit `/etc/asterisk/pjsip.transports_custom.conf`:
 type=transport
 protocol=tls
 bind=0.0.0.0:5061
-external_signaling_address=203.0.113.10                              ; Your public IP address
+external_signaling_address=XXX.XXX.XXX.XXX                           ; Your public IP address
 external_signaling_port=5061                                         ; External SIP TLS port
 ms_signaling_address=sbc.example.com                                 ; FQDN added by patch — must match TLS cert CN
 cert_file=/etc/letsencrypt/live/sbc.example.com/fullchain.pem        ; RSA cert (fullchain includes intermediate)
@@ -179,7 +179,7 @@ Edit `/etc/asterisk/pjsip.conf` and add or update your transport section:
 type=transport
 protocol=tls
 bind=0.0.0.0:5061
-external_signaling_address=203.0.113.10                              ; Your public IP address
+external_signaling_address=XXX.XXX.XXX.XXX                           ; Your public IP address
 external_signaling_port=5061                                         ; External SIP TLS port
 ms_signaling_address=sbc.example.com                                 ; FQDN added by patch — must match TLS cert CN
 cert_file=/etc/letsencrypt/live/sbc.example.com/fullchain.pem        ; RSA cert (fullchain includes intermediate)
